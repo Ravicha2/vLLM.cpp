@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 1 — The softmax that doesn't explode</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#5c5c5c; --bg:#fbfaf7; --panel:#fff;
+    --rule:#e3ded4; --accent:#a8442a; --accent-soft:#f6e9e3;
+    --ok:#1f6b45; --ok-soft:#e6f2ea; --bad:#a3231f; --bad-soft:#f7e6e5;
+    --code-bg:#f3f0ea; --maxw:44rem;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --ink:#e9e6df; --muted:#a7a29a; --bg:#171614; --panel:#1f1e1b;
+      --rule:#33312c; --accent:#e08a6f; --accent-soft:#3a2620;
+      --ok:#7fc9a0; --ok-soft:#1d2f26; --bad:#f0918c; --bad-soft:#33201f;
+      --code-bg:#262420;
+    }
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:18px/1.65 "Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    padding:3rem 1.25rem 5rem;
+  }
+  main{max-width:var(--maxw); margin:0 auto}
+  .eyebrow{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.72rem;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin:0 0 .6rem;
+  }
+  h1{font-size:2.1rem; line-height:1.15; margin:0 0 .5rem; letter-spacing:-.01em}
+  .lead{font-size:1.12rem; color:var(--muted); margin:0 0 2rem}
+  h2{
+    font-size:1.28rem; margin:2.6rem 0 .8rem; padding-top:1.4rem;
+    border-top:1px solid var(--rule);
+  }
+  h3{font-size:1rem; margin:1.6rem 0 .4rem; font-family:ui-sans-serif,system-ui,sans-serif}
+  p{margin:.7rem 0}
+  a{color:var(--accent); text-underline-offset:2px}
+  .muted{color:var(--muted)}
+  code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  code{background:var(--code-bg); padding:.1em .35em; border-radius:4px; font-size:.86em}
+  pre{
+    background:var(--code-bg); border:1px solid var(--rule); border-radius:10px;
+    padding:1rem 1.1rem; overflow:auto; font-size:.82rem; line-height:1.55;
+  }
+  pre code{background:none; padding:0; font-size:1em}
+  .callout{
+    background:var(--accent-soft); border:1px solid var(--rule);
+    border-radius:8px; padding:.85rem 1.1rem; margin:1.2rem 0;
+  }
+  .callout.warn{background:var(--bad-soft)}
+  .callout .tag{
+    display:block; font-family:ui-sans-serif,system-ui,sans-serif; font-size:.7rem;
+    text-transform:uppercase; letter-spacing:.1em; color:var(--accent); margin-bottom:.25rem;
+  }
+  .callout.warn .tag{color:var(--bad)}
+  .math{
+    display:block; text-align:center; margin:1.1rem 0; font-style:italic; font-size:1.05rem;
+  }
+  .math var{font-style:italic}
+  table{border-collapse:collapse; width:100%; margin:1rem 0; font-size:.9rem}
+  th,td{text-align:left; padding:.45rem .6rem; border-bottom:1px solid var(--rule)}
+  th{font-family:ui-sans-serif,system-ui,sans-serif; font-size:.78rem; text-transform:uppercase;
+     letter-spacing:.06em; color:var(--muted)}
+  td code{font-size:.85em}
+  ol.steps{padding-left:1.2rem}
+  ol.steps>li{margin:.9rem 0}
+  details{
+    background:var(--panel); border:1px solid var(--rule); border-radius:8px;
+    padding:.6rem 1rem; margin:1rem 0;
+  }
+  summary{cursor:pointer; font-family:ui-sans-serif,system-ui,sans-serif; font-size:.9rem;
+          color:var(--accent)}
+  details[open] summary{margin-bottom:.6rem}
+  .quiz{background:var(--panel); border:1px solid var(--rule); border-radius:10px;
+        padding:1rem 1.2rem; margin:1.2rem 0}
+  .quiz .q{font-weight:600; margin:0 0 .6rem; font-family:ui-sans-serif,system-ui,sans-serif;
+           font-size:.95rem}
+  .opt{display:block; width:100%; text-align:left; margin:.35rem 0; padding:.55rem .8rem;
+       border:1px solid var(--rule); border-radius:7px; background:var(--bg); color:var(--ink);
+       font:inherit; font-size:.9rem; cursor:pointer; transition:.12s}
+  .opt:hover{border-color:var(--accent)}
+  .opt.ok{background:var(--ok-soft); border-color:var(--ok); color:var(--ok)}
+  .opt.bad{background:var(--bad-soft); border-color:var(--bad); color:var(--bad)}
+  .opt[disabled]{cursor:default; opacity:.85}
+  .fb{font-size:.88rem; margin:.5rem 0 0; min-height:1.2em; color:var(--muted)}
+  footer{margin-top:3.5rem; padding-top:1.4rem; border-top:1px solid var(--rule);
+         color:var(--muted); font-size:.9rem}
+  .kbd{font-family:ui-monospace,monospace; background:var(--code-bg); border:1px solid var(--rule);
+       border-radius:4px; padding:.1em .4em; font-size:.82em}
+  @media print{
+    body{background:#fff; color:#000; font-size:11.5pt}
+    .quiz,.opt{display:none}
+    details{break-inside:avoid}
+    a{color:#000}
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <p class="eyebrow">vLLM.cpp · Phase&nbsp;1 · Issue&nbsp;#1</p>
+  <h1>The softmax that doesn't explode</h1>
+  <p class="lead">One small function sits at the centre of every attention layer. Written the
+  obvious way it returns <code>NaN</code> on exactly the inputs a real model produces — and
+  nothing throws. You'll write the version that doesn't, and prove it with a test.</p>
+
+  <div class="callout">
+    <span class="tag">Your win by the end</span>
+    A <code>vllmcpp::softmax</code> in <code>include/vllmcpp/ops.h</code> and a passing
+    <code>tests/test_ops.cpp</code>, wired into <code>ctest</code>.
+  </div>
+
+  <h2>Why this, and why now</h2>
+  <p>Attention decides what each token looks at by producing a set of scores, one per
+  previous token, and turning them into weights that sum to 1. That normalisation step is
+  <strong>softmax</strong>. It runs once per attention head, per layer, per token — so it is
+  the first real kernel your engine needs, and it is where the project's whole theme starts:
+  <em>code that produces a plausible-looking wrong number instead of an error</em>.</p>
+  <p>Phase&nbsp;1's promise is that a cache-grown decode must match a fresh recompute. That
+  guarantee is only meaningful once the pieces underneath it are numerically correct. This
+  lesson gets the first piece right. It is one slice of
+  <a href="https://github.com/Ravicha2/vLLM.cpp/issues/1">issue&nbsp;#1</a>; matmul and the
+  tensor wrapper come alongside it.</p>
+
+  <h2>The idea, in one line</h2>
+  <p>Softmax takes a list of raw scores (called <strong>logits</strong>) and turns them into
+  a probability distribution:</p>
+  <span class="math">softmax(<var>z</var>)<sub>i</sub> = e<sup><var>z</var><sub>i</sub></sup> ⁄ Σ<sub>j</sub> e<sup><var>z</var><sub>j</sub></sup></span>
+  <p>Bigger logit → bigger probability, and the whole list sums to 1. Simple.</p>
+
+  <h2>The bug hiding in the obvious version</h2>
+  <p>Write it exactly as the formula says and feed it what a model actually emits. Logits
+  are unbounded — a confident model can produce a score of 900, or 10&nbsp;000.</p>
+  <pre><code>// The naive version — correct on paper, broken on a real machine.
+std::vector&lt;float&gt; softmax(const std::vector&lt;float&gt;&amp; z) {
+  float sum = 0.f;
+  std::vector&lt;float&gt; out(z.size());
+  for (size_t i = 0; i &lt; z.size(); ++i) { out[i] = std::exp(z[i]); sum += out[i]; }
+  for (float&amp; x : out) x /= sum;
+  return out;
+}</code></pre>
+  <p>In 32-bit float the largest finite number is about <code>3.4e38</code>, and
+  <code>e<sup>x</sup></code> sails past it once <code>x</code> is roughly <strong>88.7</strong>.
+  Beyond that, <code>exp</code> returns <code>inf</code> —
+  <a href="https://en.cppreference.com/w/c/numeric/math/exp">documented, not an accident</a>.</p>
+  <table>
+    <thead><tr><th><var>z</var></th><th><code>expf(z)</code> (float32)</th></tr></thead>
+    <tbody>
+      <tr><td>10</td><td>22026</td></tr>
+      <tr><td>88</td><td>1.65e38</td></tr>
+      <tr><td>89</td><td><code>inf</code> ← already over the edge</td></tr>
+      <tr><td>1000</td><td><code>inf</code></td></tr>
+    </tbody>
+  </table>
+  <p>Now the denominator is <code>inf</code>, every numerator is <code>inf</code>, and
+  <code>inf / inf</code> is <code>NaN</code>. No exception, no warning: your attention
+  weights quietly become <code>NaN</code>, which spreads through the layer and turns the
+  output to mush. This is the same class of failure Phase&nbsp;2's "paged must equal naive"
+  test exists to catch, just one level down.</p>
+
+  <div class="callout warn">
+    <span class="tag">The tell</span>
+    If your test feeds <code>{1000, 1001, 999}</code> and the probabilities come back as
+    <code>nan, nan, nan</code> — or the sum isn't 1 — you have this bug, not a test bug.
+  </div>
+
+  <h2>The fix: subtract the max</h2>
+  <p>Softmax doesn't care about the absolute size of the logits, only their differences.
+  Shifting every logit by the same amount <var>c</var> leaves the result unchanged — the
+  factors of <code>e<sup>c</sup></code> cancel top and bottom:</p>
+  <span class="math">e<sup><var>z</var><sub>i</sub>−<var>c</var></sup> ⁄ Σ<sub>j</sub> e<sup><var>z</var><sub>j</sub>−<var>c</var></sup> = e<sup><var>z</var><sub>i</sub></sup> ⁄ Σ<sub>j</sub> e<sup><var>z</var><sub>j</sub></sup></span>
+  <p>So pick <var>c</var> = the largest logit. Now the biggest exponent is
+  <code>e<sup>0</sup> = 1</code> and every other one is ≤ 1. Nothing overflows, ever — no
+  matter how large the raw logits were. This is the same move as the
+  <a href="https://en.wikipedia.org/wiki/LogSumExp">log-sum-exp trick</a>, which you'll meet
+  again whenever you need <code>log(softmax)</code> (a loss function, say) rather than the
+  probabilities themselves.</p>
+
+  <h3>Your task</h3>
+  <ol class="steps">
+    <li>
+      <strong>Add the header.</strong> Create <code>include/vllmcpp/ops.h</code> with a
+      <code>softmax</code> that takes a span of logits and returns a <code>std::vector&lt;float&gt;</code>
+      of probabilities. Subtracting the max is the whole assignment — keep it small.
+      <pre><code>#pragma once
+#include &lt;span&gt;
+#include &lt;vector&gt;
+
+namespace vllmcpp {
+std::vector&lt;float&gt; softmax(std::span&lt;const float&gt; logits);
+}</code></pre>
+    </li>
+    <li>
+      <strong>Write the test.</strong> Create <code>tests/test_ops.cpp</code>. Use
+      <code>CHECK</code> from <code>tests/check.h</code> (not <code>assert</code> — it's
+      compiled out in Release). Cover three things: a normal case, the overflow case, and
+      the edge of an empty list.
+      <pre><code>#include &lt;cmath&gt;
+#include &lt;span&gt;
+#include &lt;vector&gt;
+
+#include "vllmcpp/ops.h"
+#include "check.h"
+
+int main() {
+  // 1. Normal case: largest logit gets the largest probability, sums to 1.
+  std::vector&lt;float&gt; z{1.f, 2.f, 3.f};
+  auto p = vllmcpp::softmax(std::span&lt;const float&gt;(z));
+  float sum = 0.f; for (float x : p) sum += x;
+  CHECK(std::abs(sum - 1.f) &lt; 1e-5f);
+  CHECK(p[2] &gt; p[1] &amp;&amp; p[1] &gt; p[0]);
+
+  // 2. The overflow case. Naive exp() would give inf/inf = NaN here.
+  std::vector&lt;float&gt; big{1000.f, 1001.f, 999.f};
+  auto q = vllmcpp::softmax(std::span&lt;const float&gt;(big));
+  float qsum = 0.f; for (float x : q) qsum += x;
+  CHECK(std::isfinite(qsum));          // no NaN, no inf
+  CHECK(std::abs(qsum - 1.f) &lt; 1e-5f);
+  CHECK(q[1] &gt; q[0] &amp;&amp; q[0] &gt; q[2]);    // order preserved
+
+  return 0;
+}</code></pre>
+    </li>
+    <li>
+      <strong>Wire it in.</strong> In <code>CMakeLists.txt</code> add the source to the
+      library and register the test with the existing helper:
+      <pre><code>vllm_add_test(test_ops)</code></pre>
+    </li>
+    <li>
+      <strong>Run it.</strong> <span class="kbd">cmake --build build &amp;&amp; ctest --test-dir build --output-on-failure</span>
+      — it should pass on the first honest attempt. Then, to <em>feel</em> the bug, change
+      the test to call your old naive version and watch it go <code>nan</code>.
+    </li>
+  </ol>
+
+  <details>
+    <summary>Reference solution (try it first — then compare)</summary>
+    <pre><code>std::vector&lt;float&gt; softmax(std::span&lt;const float&gt; logits) {
+  std::vector&lt;float&gt; out(logits.begin(), logits.end());
+  if (out.empty()) return out;
+
+  const float max_z = *std::max_element(out.begin(), out.end());
+  float sum = 0.f;
+  for (float&amp; x : out) { x = std::exp(x - max_z); sum += x; }
+  for (float&amp; x : out) x /= sum;
+  return out;
+}</code></pre>
+    <p class="muted">One subtlety worth noticing: <code>sum</code> can never be 0 here,
+    because the max element contributes exactly <code>e<sup>0</sup> = 1</code>. That's a
+    free guardrail of the max-subtraction — hold onto it.</p>
+  </details>
+
+  <h2>Check yourself</h2>
+
+  <div class="quiz" data-quiz>
+    <p class="q">1. Why does the naive softmax of <code>{1000, 1000}</code> return NaN in float32?</p>
+    <button class="opt" data-correct="true">exp overflows to inf, so the fraction is inf/inf, which is NaN</button>
+    <button class="opt" data-correct="false">The two logits are equal, so the division is undefined</button>
+    <button class="opt" data-correct="false">The vector is too short for the loop</button>
+    <button class="opt" data-correct="false">exp returns negative values that cancel out</button>
+    <p class="fb" data-fb></p>
+  </div>
+
+  <div class="quiz" data-quiz>
+    <p class="q">2. Does subtracting the maximum logit change the softmax output?</p>
+    <button class="opt" data-correct="true">No — mathematically it's identical; the factors cancel</button>
+    <button class="opt" data-correct="false">Yes — it shifts all probabilities upward</button>
+    <button class="opt" data-correct="false">Only when the logits are large</button>
+    <button class="opt" data-correct="false">Yes — it makes the distribution uniform</button>
+    <p class="fb" data-fb></p>
+  </div>
+
+  <div class="quiz" data-quiz>
+    <p class="q">3. Later you need <code>log(softmax_i)</code> for a loss. Is subtracting only the max enough?</p>
+    <button class="opt" data-correct="false">Yes, always — same trick, same guarantee</button>
+    <button class="opt" data-correct="true">No — you need log-sum-exp to keep the log itself stable</button>
+    <button class="opt" data-correct="false">Yes, as long as every logit is positive</button>
+    <button class="opt" data-correct="false">Only if the vocabulary is small</button>
+    <p class="fb" data-fb></p>
+  </div>
+
+  <h2>Where this leads</h2>
+  <p>Softmax is the last step of attention, and the first thing that made your engine
+  numerically real. Next in issue&nbsp;#1 is <code>matmul</code> and a thin tensor wrapper;
+  then <code>rmsnorm</code>, <code>silu</code>, and <code>rope</code> (issue&nbsp;#2) — all
+  of which you'll test the same way, against hand-computed values with an edge case that
+  would break the obvious implementation.</p>
+
+  <footer>
+    <p><strong>Stuck, or want to go deeper?</strong> Ask me — I'm your teacher for this, not
+    the page. Good follow-ups from here: <em>why does the max-subtraction never divide by
+    zero?</em>, <em>what does log-sum-exp look like in code?</em>, or <em>how is softmax
+    fused into a real attention kernel?</em></p>
+    <p class="muted">Sources: <a href="https://en.cppreference.com/w/c/numeric/math/exp">cppreference — exp, expf</a> ·
+    <a href="https://en.wikipedia.org/wiki/LogSumExp">Wikipedia — LogSumExp</a> ·
+    <a href="https://huggingface.co/blog/not-lain/kv-caching">HF — KV Caching Explained</a> ·
+    <a href="https://arxiv.org/abs/2309.06180">Kwon et al., PagedAttention (2023)</a>.
+    See <a href="../RESOURCES.md">RESOURCES.md</a> for the full list.</p>
+  </footer>
+
+</main>
+
+<script>
+  document.querySelectorAll('[data-quiz]').forEach(function (quiz) {
+    var fb = quiz.querySelector('[data-fb]');
+    quiz.querySelectorAll('.opt').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var right = btn.dataset.correct === 'true';
+        btn.classList.add(right ? 'ok' : 'bad');
+        quiz.querySelectorAll('.opt').forEach(function (b) {
+          b.disabled = true;
+          if (b.dataset.correct === 'true') b.classList.add('ok');
+        });
+        fb.textContent = right
+          ? 'Correct. ' + (quiz.querySelector('.opt[data-correct="true"]').textContent.trim())
+          : 'Not quite — the right answer is highlighted. ' +
+            (quiz.querySelector('.opt[data-correct="true"]').textContent.trim());
+      });
+    });
+  });
+</script>
+</body>
+</html>

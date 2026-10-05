@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vLLM.cpp — Glossary</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#54514b; --bg:#fbfaf7; --panel:#fff;
+    --rule:#e3ded4; --accent:#8f3a22; --soft:#f6e9e3;
+    --maxw:46rem;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --ink:#e9e6df; --muted:#b9b4ab; --bg:#171614; --panel:#1f1e1b;
+      --rule:#33312c; --accent:#e08a6f; --soft:#3a2620;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:17px/1.6 "Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    padding:3rem 1.25rem 5rem;
+  }
+  main{max-width:var(--maxw); margin:0 auto}
+  .eyebrow{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.72rem;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin:0 0 .5rem}
+  h1{font-size:2rem; margin:0 0 .4rem; letter-spacing:-.01em}
+  .lead{color:var(--muted); margin:0 0 1.5rem}
+  h2{font-size:1.1rem; margin:2.4rem 0 .6rem; padding-top:1.2rem;
+     border-top:1px solid var(--rule); font-family:ui-sans-serif,system-ui,sans-serif}
+  dl{margin:0}
+  dt{font-weight:600; margin-top:1rem; font-family:ui-sans-serif,system-ui,sans-serif; font-size:.97rem}
+  dt .phase{font-weight:400; color:var(--muted); font-size:.78rem; font-family:ui-monospace,monospace;
+    margin-left:.5rem; letter-spacing:.04em}
+  dd{margin:.15rem 0 0 0; color:var(--ink)}
+  dd .muted{color:var(--muted)}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--soft);
+    padding:.06em .35em; border-radius:4px; font-size:.85em}
+  a{color:var(--accent); text-underline-offset:2px}
+  footer{margin-top:3rem; padding-top:1.2rem; border-top:1px solid var(--rule);
+    color:var(--muted); font-size:.88rem}
+  @media print{body{background:#fff; color:#000; font-size:11pt} a{color:#000}}
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">vLLM.cpp · reference</p>
+  <h1>Glossary</h1>
+  <p class="lead">The words this project uses, and what they mean here. Every lesson sticks to
+  these terms. Phase tag shows where the term first earns its keep.</p>
+
+  <h2>The basics</h2>
+  <dl>
+    <dt>Token <span class="phase">phase 1</span></dt>
+    <dd>A chunk of text (roughly a word-piece) that the model reads and writes. Models generate
+    one token at a time.</dd>
+
+    <dt>Logits <span class="phase">phase 1</span></dt>
+    <dd>The raw, unbounded scores the model gives every token in its vocabulary before turning
+    them into probabilities. Bigger score = more likely.</dd>
+
+    <dt>Softmax <span class="phase">phase 1</span></dt>
+    <dd>Turns a list of logits into probabilities that sum to 1. Written stably by subtracting
+    the maximum logit first, so large scores don't overflow. See
+    <a href="../lessons/0001-numerically-stable-softmax.html">Lesson 1</a>.</dd>
+
+    <dt>Tensor <span class="phase">phase 1</span></dt>
+    <dd>A multi-dimensional array of numbers. Here it's a thin wrapper over Eigen, not a new
+    tensor library.</dd>
+
+    <dt>matmul <span class="phase">phase 1</span></dt>
+    <dd>Matrix multiplication. The bulk of the arithmetic in a transformer.</dd>
+
+    <dt>Float32 / FLT_MAX / overflow / NaN <span class="phase">phase 1</span></dt>
+    <dd>32-bit floating point. Its largest finite value is about <code>3.4e38</code>; a
+    calculation that goes past that produces <code>inf</code> ("overflow"), and
+    <code>inf/inf</code> produces <code>NaN</code> ("not a number") — a silently wrong value,
+    not an error.</dd>
+
+    <dt>Log-sum-exp <span class="phase">phase 1</span></dt>
+    <dd>The identity <code>log Σ e<sup>x</sup> = m + log Σ e<sup>x−m</sup></code> with
+    <code>m</code> the max. The robust way to compute softmax, or its logarithm.</dd>
+  </dl>
+
+  <h2>Attention</h2>
+  <dl>
+    <dt>Attention <span class="phase">phase 1</span></dt>
+    <dd>The step where each token gathers information from earlier tokens, weighted by how
+    relevant they are. Each token produces a <strong>query</strong> (what it's looking for),
+    and every token has a <strong>key</strong> (what it offers) and a <strong>value</strong>
+    (what it passes on).</dd>
+
+    <dt>Head / multi-head attention <span class="phase">phase 1</span></dt>
+    <dd>Attention run several times in parallel with different learned weights ("heads"), so
+    the model can attend to different things at once. Their outputs are concatenated.</dd>
+
+    <dt>Grouped-query attention (GQA) <span class="phase">phase 1+</span></dt>
+    <dd>A cheaper variant where several query heads share one set of key/value heads. Start
+    without it; add once multi-head works.</dd>
+
+    <dt>Causal mask <span class="phase">phase 1</span></dt>
+    <dd>A rule that stops a token attending to tokens <em>after</em> it. Required so generation
+    can't peek at the future. In incremental decode it happens for free; in a full recompute you
+    must apply it explicitly.</dd>
+
+    <dt>RMSNorm <span class="phase">phase 1</span></dt>
+    <dd>A cheap normalisation applied before attention and before the MLP. Scales each vector by
+    its root-mean-square size, no mean subtraction.</dd>
+
+    <dt>RoPE <span class="phase">phase 1</span></dt>
+    <dd>"Rotary position embedding." Encodes a token's position by rotating its query and key
+    vectors by an angle that depends on absolute position. The classic source of off-by-one,
+    silently-wrong answers.</dd>
+
+    <dt>SiLU / SwiGLU <span class="phase">phase 1</span></dt>
+    <dd>The activation function inside the MLP. SiLU is <code>x · sigmoid(x)</code>; SwiGLU uses
+    it to gate one branch with another.</dd>
+
+    <dt>Residual connection <span class="phase">phase 1</span></dt>
+    <dd>Adding a layer's input back to its output. Lets information skip past a layer and makes
+    deep stacks trainable.</dd>
+  </dl>
+
+  <h2>The cache</h2>
+  <dl>
+    <dt>KV cache <span class="phase">phase 1</span></dt>
+    <dd>Stored key and value vectors for tokens already processed, so each new token doesn't
+    recompute them. The reason generation is not quadratic in the number of tokens.</dd>
+
+    <dt>Prefill vs decode <span class="phase">phase 1</span></dt>
+    <dd><strong>Prefill</strong> processes the prompt all at once; <strong>decode</strong>
+    produces the answer one token at a time, reading the cache. Phase 1's test is that the two
+    agree.</dd>
+
+    <dt>PagedAttention <span class="phase">phase 2</span></dt>
+    <dd>vLLM's core idea: split the KV cache into fixed-size <strong>blocks</strong> instead of
+    one contiguous buffer per sequence, so memory can be shared and reused.</dd>
+
+    <dt>Block / block table <span class="phase">phase 2</span></dt>
+    <dd>A block holds a fixed number of tokens' K/V (16 here). A sequence's block table lists
+    which blocks are its own, in order.</dd>
+
+    <dt>Block pool / free list <span class="phase">phase 2</span></dt>
+    <dd>The shared supply of blocks, plus the queue that decides which free block to hand out
+    next (least-recently-used first).</dd>
+
+    <dt>Copy-on-write <span class="phase">phase 2</span></dt>
+    <dd>When two sequences share a block and one needs to change it, that sequence copies the
+    block first so the other isn't disturbed. How prefix sharing stays safe.</dd>
+
+    <dt>Prefix caching <span class="phase">phase 5</span></dt>
+    <dd>Reusing KV blocks for prompts that share a common start, by matching block hashes.</dd>
+  </dl>
+
+  <h2>Running the engine</h2>
+  <dl>
+    <dt>Continuous batching <span class="phase">phase 3</span></dt>
+    <dd>Adding and removing requests between decode steps, instead of waiting for a whole batch
+    to finish. Keeps the engine busy; the main source of vLLM's throughput.</dd>
+
+    <dt>Scheduler <span class="phase">phase 3</span></dt>
+    <dd>Decides, each step, which requests to run and how many tokens they may use, given memory
+    and token budgets.</dd>
+
+    <dt>Greedy sampling <span class="phase">phase 1</span></dt>
+    <dd>Always pick the highest-probability token. Deterministic.</dd>
+
+    <dt>Temperature <span class="phase">phase 1</span></dt>
+    <dd>Divides the logits before softmax. Lower = more predictable, higher = more random.
+    Temperature 0 means greedy.</dd>
+
+    <dt>Top-p (nucleus) sampling <span class="phase">phase 1</span></dt>
+    <dd>Keep the smallest set of most-likely tokens whose probabilities add up past <code>p</code>,
+    discard the rest, renormalise, then sample.</dd>
+
+    <dt>Epsilon (float epsilon) <span class="phase">phase 1</span></dt>
+    <dd>A tiny tolerance for "close enough" when comparing two float results. Phase 2's proof
+    that paged equals naive is "equal within epsilon."</dd>
+  </dl>
+
+  <footer>
+    <p>Sources for these definitions live in <a href="../RESOURCES.md">RESOURCES.md</a>. If a
+    lesson uses a term that isn't here, that's a bug — tell your teacher and it gets added.</p>
+  </footer>
+</main>
+</body>
+</html>

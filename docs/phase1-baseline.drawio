@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="drawio" version="26.0.0">
+  <diagram name="Phase1-Baseline">
+    <mxGraphModel dx="1440" dy="860" grid="1" gridSize="10" page="1" pageWidth="1500" pageHeight="860" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title + roadmap label -->
+        <mxCell id="2" value="vLLM.cpp — Phase 1: The Baseline Engine (naive, on purpose)" style="text;html=1;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="80" y="16" width="900" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="3" value="THE BIGGER PICTURE — five phases; Phase 1 is the &quot;before&quot; photo" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontStyle=2;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="80" y="52" width="600" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Roadmap row -->
+        <mxCell id="4" value="Phase 1 — Baseline&#xa;naive engine&#xa;(YOU ARE HERE)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=3;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="100" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="5" value="Phase 2 — Paged KV cache&#xa;blocks, free list, hashing" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="340" y="100" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="6" value="Phase 3 — Scheduler&#xa;continuous batching" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="600" y="100" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="7" value="Phase 4 — Real model&#xa;weights + tokenizer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="860" y="100" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="8" value="Phase 5 — Prefix caching&#xa;(optional)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="100" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Roadmap edges -->
+        <mxCell id="9" value="memory fix" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=10;fontColor=#666666;" edge="1" parent="1" source="4" target="5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="10" value="throughput fix" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=10;fontColor=#666666;" edge="1" parent="1" source="5" target="6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="11" value="real weights" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=10;fontColor=#666666;" edge="1" parent="1" source="6" target="7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="12" value="prefix reuse" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=10;fontColor=#666666;" edge="1" parent="1" source="7" target="8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Left swimlane: what Phase 1 builds -->
+        <mxCell id="13" value="PHASE 1 — WHAT YOU BUILD (all five files are new; no vLLM file maps here)" style="swimlane;startSize=30;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="230" width="640" height="480" as="geometry" />
+        </mxCell>
+        <mxCell id="14" value="tensor.h&#xa;thin Eigen-backed Tensor" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="13">
+          <mxGeometry x="30" y="60" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="15" value="ops.h&#xa;matmul · softmax · RMSNorm&#xa;RoPE · SiLU" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="13">
+          <mxGeometry x="30" y="160" width="200" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="16" value="model.h&#xa;Llama-style decoder block" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="13">
+          <mxGeometry x="30" y="270" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="17" value="sampler.h&#xa;greedy · temperature · top-p" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="13">
+          <mxGeometry x="30" y="380" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="18" value="kv_cache_naive.cpp&#xa;contiguous per-sequence&#xa;KV buffer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="13">
+          <mxGeometry x="380" y="270" width="220" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Inner pipeline edges -->
+        <mxCell id="19" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="13" source="14" target="15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="20" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="13" source="15" target="16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="21" value="logits" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=10;fontColor=#666666;" edge="1" parent="13" source="16" target="17">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="22" value="attention reads /&#xa;appends K·V" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;startArrow=classic;startFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=10;fontColor=#666666;" edge="1" parent="13" source="16" target="18">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="23" value="green = compute layer, reused by every later phase" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontStyle=2;fontColor=#82b366;" vertex="1" parent="13">
+          <mxGeometry x="30" y="450" width="560" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Right swimlane: why naive -->
+        <mxCell id="24" value="WHY IT'S SLOW — ON PURPOSE (the design vLLM was invented to replace)" style="swimlane;startSize=30;html=1;fillColor=#ffffff;strokeColor=#d79b00;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="780" y="230" width="640" height="480" as="geometry" />
+        </mxCell>
+        <mxCell id="25" value="Contiguous KV cache&#xa;one buffer per sequence, sized for the MAX length — used or not" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="24">
+          <mxGeometry x="30" y="60" width="580" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="26" value="One sequence at a time&#xa;no scheduler, no batching — request B waits for request A" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="24">
+          <mxGeometry x="30" y="160" width="580" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="27" value="Memory hog&#xa;a 50-token request pays&#xa;for a 2048-token buffer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="24">
+          <mxGeometry x="30" y="270" width="280" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="28" value="Low throughput&#xa;hardware idles between&#xa;requests; nothing shares a step" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="24">
+          <mxGeometry x="330" y="270" width="280" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="29" value="Deliberate: this is the yardstick —&#xa;Phase 2's memory win and Phase 3's throughput win are measured against this baseline" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="24">
+          <mxGeometry x="30" y="380" width="580" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Correctness gate -->
+        <mxCell id="30" value="&#8730; THE CORRECTNESS GATE: incremental decode (append one token at a time to the growing cache) must EXACTLY equal a full recompute of the same prefix — this is the test that catches RoPE and position-index bugs, the classic silent-wrong-answer failures" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="750" width="1340" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- kv buffer gets replaced in Phase 2 -->
+        <mxCell id="31" value="replaced in Phase 2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#b85450;fontSize=10;fontColor=#b85450;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="18" target="5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="570" y="210" />
+              <mxPoint x="440" y="210" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
